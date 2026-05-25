@@ -14,10 +14,11 @@ CLI 统一通过 Bearer Token 鉴权，不使用网页端账号密码登录流�
 4. 涉及成员或分享对象时，`actor_id` 必须带前缀，格式是 `user:<username>` 或 `agent:<name>`。
 5. `workspaces add-member` 的 `--permission` 允许值是 `read`、`write`、`owner`。
 6. `shares add` 的 `--permission` 允许值是 `read`、`write`。
-7. `files write` 和 `files append` 都必须二选一传入 `--file` 或 `--stdin`，不能两个都传，也不能两个都不传。
-8. 文件操作优先使用 Linux 风格命名：`files ls`、`files rm`、`files cp`、`files mv`；旧的 `files list`、`files delete` 仍然可用，但更推荐前者。
-9. `files upload --path` 为空时上传到根目录；以 `/` 结尾时表示目标目录；不以 `/` 结尾时表示最终远端文件路径。
-10. `files preview-url` 只是本地拼接 URL，不会向服务端发请求，也不会预先验证文件是否存在或当前 token 是否有权限。
+7. 只有 workspace 的 `owner` 或管理员能管理成员、分享记录和公开链接；路径级 `write` 只代表内容写权限，不代表可再授权。
+8. `files write` 和 `files append` 都必须二选一传入 `--file` 或 `--stdin`，不能两个都传，也不能两个都不传。
+9. 文件操作优先使用 Linux 风格命名：`files ls`、`files rm`、`files cp`、`files mv`；旧的 `files list`、`files delete` 仍然可用，但更推荐前者。
+10. `files upload --path` 为空时上传到根目录；以 `/` 结尾时表示目标目录；不以 `/` 结尾时表示最终远端文件路径。
+11. `files preview-url` 只是本地拼接 URL，不会向服务端发请求，也不会预先验证文件是否存在或当前 token 是否有权限。
 
 ## 命令结构
 
@@ -185,7 +186,7 @@ CLI 基本不重命名服务端返回字段。下面是最常见对象形状。
 语法：
 
 ```bash
-drive-board [全局参数] whoami
+drive-cli [全局参数] whoami
 ```
 
 用途：
@@ -201,7 +202,7 @@ drive-board [全局参数] whoami
 示例：
 
 ```bash
-drive-board --token main-agent-token --format json whoami
+drive-cli --token main-agent-token --format json whoami
 ```
 
 ### `actors list`
@@ -209,7 +210,7 @@ drive-board --token main-agent-token --format json whoami
 语法：
 
 ```bash
-drive-board [全局参数] actors list [--type <all|user|agent>] [--include-inactive]
+drive-cli [全局参数] actors list [--type <all|user|agent>] [--include-inactive]
 ```
 
 用途：
@@ -231,7 +232,7 @@ drive-board [全局参数] actors list [--type <all|user|agent>] [--include-inac
 示例：
 
 ```bash
-drive-board --token main-agent-token --format json actors list
+drive-cli --token main-agent-token --format json actors list
 ```
 
 ### `workspaces list`
@@ -239,7 +240,7 @@ drive-board --token main-agent-token --format json actors list
 语法：
 
 ```bash
-drive-board [全局参数] workspaces list
+drive-cli [全局参数] workspaces list
 ```
 
 用途：
@@ -259,7 +260,7 @@ drive-board [全局参数] workspaces list
 示例：
 
 ```bash
-drive-board --token main-agent-token --format json workspaces list
+drive-cli --token main-agent-token --format json workspaces list
 ```
 
 ### `workspaces create-group`
@@ -267,7 +268,7 @@ drive-board --token main-agent-token --format json workspaces list
 语法：
 
 ```bash
-drive-board [全局参数] workspaces create-group --name <workspace_name>
+drive-cli [全局参数] workspaces create-group --name <workspace_name>
 ```
 
 用途：
@@ -288,7 +289,7 @@ drive-board [全局参数] workspaces create-group --name <workspace_name>
 示例：
 
 ```bash
-drive-board --token main-agent-token --format json workspaces create-group --name research-team
+drive-cli --token main-agent-token --format json workspaces create-group --name research-team
 ```
 
 ### `workspaces members`
@@ -296,7 +297,7 @@ drive-board --token main-agent-token --format json workspaces create-group --nam
 语法：
 
 ```bash
-drive-board [全局参数] workspaces members <workspace>
+drive-cli [全局参数] workspaces members <workspace>
 ```
 
 用途：
@@ -316,7 +317,7 @@ drive-board [全局参数] workspaces members <workspace>
 示例：
 
 ```bash
-drive-board --token main-agent-token --format json workspaces members research-team
+drive-cli --token main-agent-token --format json workspaces members research-team
 ```
 
 ### `workspaces add-member`
@@ -324,7 +325,7 @@ drive-board --token main-agent-token --format json workspaces members research-t
 语法：
 
 ```bash
-drive-board [全局参数] workspaces add-member <workspace> --actor <actor_id> [--permission <read|write|owner>]
+drive-cli [全局参数] workspaces add-member <workspace> --actor <actor_id> [--permission <read|write|owner>]
 ```
 
 用途：
@@ -343,11 +344,12 @@ drive-board [全局参数] workspaces add-member <workspace> --actor <actor_id> 
 
 - 这是“新增或覆盖”语义，不是只允许新增。
 - 如果成员已存在，权限会被更新成新值。
+- 只有该 workspace 的 `owner` 或管理员能执行；`write` 成员不能修改成员关系。
 
 示例：
 
 ```bash
-drive-board --token main-agent-token workspaces add-member research-team --actor agent:cli-agent --permission write
+drive-cli --token main-agent-token workspaces add-member research-team --actor agent:cli-agent --permission write
 ```
 
 ### `workspaces remove-member`
@@ -355,7 +357,7 @@ drive-board --token main-agent-token workspaces add-member research-team --actor
 语法：
 
 ```bash
-drive-board [全局参数] workspaces remove-member <workspace> <actor_id>
+drive-cli [全局参数] workspaces remove-member <workspace> <actor_id>
 ```
 
 用途：
@@ -373,11 +375,12 @@ drive-board [全局参数] workspaces remove-member <workspace> <actor_id>
 
 - 该命令要求当前 token 具备 workspace 成员管理权限。
 - 如果成员不存在，服务端会返回 404。
+- `write` 成员不能移除其他成员；需要 `owner` 或管理员权限。
 
 示例：
 
 ```bash
-drive-board --token main-agent-token workspaces remove-member research-team agent:cli-agent
+drive-cli --token main-agent-token workspaces remove-member research-team agent:cli-agent
 ```
 
 ### `workspaces delete`
@@ -385,7 +388,7 @@ drive-board --token main-agent-token workspaces remove-member research-team agen
 语法：
 
 ```bash
-drive-board [全局参数] workspaces delete <workspace>
+drive-cli [全局参数] workspaces delete <workspace>
 ```
 
 用途：
@@ -407,7 +410,7 @@ drive-board [全局参数] workspaces delete <workspace>
 示例：
 
 ```bash
-drive-board --token main-agent-token workspaces delete research-team
+drive-cli --token main-agent-token workspaces delete research-team
 ```
 
 ### `files ls` / `files list`
@@ -415,10 +418,10 @@ drive-board --token main-agent-token workspaces delete research-team
 语法：
 
 ```bash
-drive-board [全局参数] files ls <workspace> [path]
-drive-board [全局参数] files list <workspace> [path]
-drive-board [全局参数] files ls <workspace> --path <relative_path>
-drive-board [全局参数] files list <workspace> --path <relative_path>
+drive-cli [全局参数] files ls <workspace> [path]
+drive-cli [全局参数] files list <workspace> [path]
+drive-cli [全局参数] files ls <workspace> --path <relative_path>
+drive-cli [全局参数] files list <workspace> --path <relative_path>
 ```
 
 用途：
@@ -446,8 +449,8 @@ drive-board [全局参数] files list <workspace> --path <relative_path>
 示例：
 
 ```bash
-drive-board --token main-agent-token --format json files ls main-agent
-drive-board --token main-agent-token --format json files ls main-agent reports
+drive-cli --token main-agent-token --format json files ls main-agent
+drive-cli --token main-agent-token --format json files ls main-agent reports
 ```
 
 ### `files mkdir`
@@ -455,7 +458,7 @@ drive-board --token main-agent-token --format json files ls main-agent reports
 语法：
 
 ```bash
-drive-board [全局参数] files mkdir <workspace> <path>
+drive-cli [全局参数] files mkdir <workspace> <path>
 ```
 
 用途：
@@ -472,7 +475,7 @@ drive-board [全局参数] files mkdir <workspace> <path>
 示例：
 
 ```bash
-drive-board --token main-agent-token files mkdir main-agent reports
+drive-cli --token main-agent-token files mkdir main-agent reports
 ```
 
 ### `files upload`
@@ -480,7 +483,7 @@ drive-board --token main-agent-token files mkdir main-agent reports
 语法：
 
 ```bash
-drive-board [全局参数] files upload <workspace> <local_path> [--path <remote_path>] [--force]
+drive-cli [全局参数] files upload <workspace> <local_path> [--path <remote_path>] [--force]
 ```
 
 用途：
@@ -506,10 +509,10 @@ drive-board [全局参数] files upload <workspace> <local_path> [--path <remote
 示例：
 
 ```bash
-drive-board --token main-agent-token files upload main-agent ./a.pdf
-drive-board --token main-agent-token files upload main-agent ./a.pdf --path reports/
-drive-board --token main-agent-token files upload main-agent ./a.pdf --path reports/final.pdf
-drive-board --token main-agent-token files upload main-agent ./a.pdf --path reports/final.pdf --force
+drive-cli --token main-agent-token files upload main-agent ./a.pdf
+drive-cli --token main-agent-token files upload main-agent ./a.pdf --path reports/
+drive-cli --token main-agent-token files upload main-agent ./a.pdf --path reports/final.pdf
+drive-cli --token main-agent-token files upload main-agent ./a.pdf --path reports/final.pdf --force
 ```
 
 ### `files download`
@@ -517,7 +520,7 @@ drive-board --token main-agent-token files upload main-agent ./a.pdf --path repo
 语法：
 
 ```bash
-drive-board [全局参数] files download <workspace> <remote_path> [--output <local_path>]
+drive-cli [全局参数] files download <workspace> <remote_path> [--output <local_path>]
 ```
 
 用途：
@@ -542,7 +545,7 @@ drive-board [全局参数] files download <workspace> <remote_path> [--output <l
 示例：
 
 ```bash
-drive-board --token main-agent-token files download main-agent reports/a.pdf --output ./a.pdf
+drive-cli --token main-agent-token files download main-agent reports/a.pdf --output ./a.pdf
 ```
 
 ### `files cat`
@@ -550,7 +553,7 @@ drive-board --token main-agent-token files download main-agent reports/a.pdf --o
 语法：
 
 ```bash
-drive-board [全局参数] files cat <workspace> <path>
+drive-cli [全局参数] files cat <workspace> <path>
 ```
 
 用途：
@@ -573,7 +576,7 @@ drive-board [全局参数] files cat <workspace> <path>
 示例：
 
 ```bash
-drive-board --token main-agent-token files cat main-agent notes/readme.md
+drive-cli --token main-agent-token files cat main-agent notes/readme.md
 ```
 
 ### `files write`
@@ -581,7 +584,7 @@ drive-board --token main-agent-token files cat main-agent notes/readme.md
 语法：
 
 ```bash
-drive-board [全局参数] files write <workspace> <path> (--file <local_file> | --stdin)
+drive-cli [全局参数] files write <workspace> <path> (--file <local_file> | --stdin)
 ```
 
 用途：
@@ -607,8 +610,8 @@ drive-board [全局参数] files write <workspace> <path> (--file <local_file> |
 示例：
 
 ```bash
-drive-board --token main-agent-token files write main-agent notes/readme.md --file ./readme.md
-cat ./readme.md | drive-board --token main-agent-token files write main-agent notes/readme.md --stdin
+drive-cli --token main-agent-token files write main-agent notes/readme.md --file ./readme.md
+cat ./readme.md | drive-cli --token main-agent-token files write main-agent notes/readme.md --stdin
 ```
 
 ### `files append`
@@ -616,7 +619,7 @@ cat ./readme.md | drive-board --token main-agent-token files write main-agent no
 语法：
 
 ```bash
-drive-board [全局参数] files append <workspace> <path> (--file <local_file> | --stdin)
+drive-cli [全局参数] files append <workspace> <path> (--file <local_file> | --stdin)
 ```
 
 用途：
@@ -644,8 +647,8 @@ drive-board [全局参数] files append <workspace> <path> (--file <local_file> 
 示例：
 
 ```bash
-echo "\n## 新增结论" | drive-board --token main-agent-token files append main-agent notes/readme.md --stdin
-drive-board --token main-agent-token files append main-agent notes/readme.md --file ./appendix.md
+echo "\n## 新增结论" | drive-cli --token main-agent-token files append main-agent notes/readme.md --stdin
+drive-cli --token main-agent-token files append main-agent notes/readme.md --file ./appendix.md
 ```
 
 ### `files cp`
@@ -653,7 +656,7 @@ drive-board --token main-agent-token files append main-agent notes/readme.md --f
 语法：
 
 ```bash
-drive-board [全局参数] files cp <workspace> <source_path> <destination_path>
+drive-cli [全局参数] files cp <workspace> <source_path> <destination_path>
 ```
 
 用途：
@@ -676,7 +679,7 @@ drive-board [全局参数] files cp <workspace> <source_path> <destination_path>
 示例：
 
 ```bash
-drive-board --token main-agent-token files cp main-agent reports/daily.md archive/daily.md
+drive-cli --token main-agent-token files cp main-agent reports/daily.md archive/daily.md
 ```
 
 ### `files mv`
@@ -684,7 +687,7 @@ drive-board --token main-agent-token files cp main-agent reports/daily.md archiv
 语法：
 
 ```bash
-drive-board [全局参数] files mv <workspace> <source_path> <destination_path>
+drive-cli [全局参数] files mv <workspace> <source_path> <destination_path>
 ```
 
 用途：
@@ -708,7 +711,7 @@ drive-board [全局参数] files mv <workspace> <source_path> <destination_path>
 示例：
 
 ```bash
-drive-board --token main-agent-token files mv main-agent reports/daily.md archive/summary.md
+drive-cli --token main-agent-token files mv main-agent reports/daily.md archive/summary.md
 ```
 
 ### `files rename`
@@ -716,7 +719,7 @@ drive-board --token main-agent-token files mv main-agent reports/daily.md archiv
 语法：
 
 ```bash
-drive-board [全局参数] files rename <workspace> <path> <new_name>
+drive-cli [全局参数] files rename <workspace> <path> <new_name>
 ```
 
 用途：
@@ -739,7 +742,7 @@ drive-board [全局参数] files rename <workspace> <path> <new_name>
 示例：
 
 ```bash
-drive-board --token main-agent-token files rename main-agent archive/summary.md final.md
+drive-cli --token main-agent-token files rename main-agent archive/summary.md final.md
 ```
 
 ### `files rm` / `files delete`
@@ -747,8 +750,8 @@ drive-board --token main-agent-token files rename main-agent archive/summary.md 
 语法：
 
 ```bash
-drive-board [全局参数] files rm <workspace> <path>
-drive-board [全局参数] files delete <workspace> <path>
+drive-cli [全局参数] files rm <workspace> <path>
+drive-cli [全局参数] files delete <workspace> <path>
 ```
 
 用途：
@@ -770,7 +773,7 @@ drive-board [全局参数] files delete <workspace> <path>
 示例：
 
 ```bash
-drive-board --token main-agent-token files rm main-agent reports/a.pdf
+drive-cli --token main-agent-token files rm main-agent reports/a.pdf
 ```
 
 ### `files preview-url`
@@ -778,7 +781,7 @@ drive-board --token main-agent-token files rm main-agent reports/a.pdf
 语法：
 
 ```bash
-drive-board [全局参数] files preview-url <workspace> <path>
+drive-cli [全局参数] files preview-url <workspace> <path>
 ```
 
 用途：
@@ -807,7 +810,7 @@ drive-board [全局参数] files preview-url <workspace> <path>
 示例：
 
 ```bash
-drive-board --token main-agent-token --format json files preview-url main-agent test_html/index.html
+drive-cli --token main-agent-token --format json files preview-url main-agent test_html/index.html
 ```
 
 ### `shares add`
@@ -815,7 +818,7 @@ drive-board --token main-agent-token --format json files preview-url main-agent 
 语法：
 
 ```bash
-drive-board [全局参数] shares add <workspace> <path> --actor <actor_id> [--permission <read|write>]
+drive-cli [全局参数] shares add <workspace> <path> --actor <actor_id> [--permission <read|write>]
 ```
 
 用途：
@@ -835,11 +838,12 @@ drive-board [全局参数] shares add <workspace> <path> --actor <actor_id> [--p
 
 - 分享文件夹后，接收方可访问该文件夹下子文件。
 - 这是“路径级分享”，不是 workspace 成员关系。
+- 只有该 workspace 的 `owner` 或管理员能创建分享；路径级 `write` 分享不能继续转分享。
 
 示例：
 
 ```bash
-drive-board --token main-agent-token shares add main-agent reports --actor agent:cli-agent --permission read
+drive-cli --token main-agent-token shares add main-agent reports --actor agent:cli-agent --permission read
 ```
 
 ### `shares ls` / `shares list`
@@ -847,10 +851,10 @@ drive-board --token main-agent-token shares add main-agent reports --actor agent
 语法：
 
 ```bash
-drive-board [全局参数] shares ls <workspace> [--path <relative_path>]
-drive-board [全局参数] shares list <workspace> [--path <relative_path>]
-drive-board [全局参数] shares ls <workspace> [path]
-drive-board [全局参数] shares list <workspace> [path]
+drive-cli [全局参数] shares ls <workspace> [--path <relative_path>]
+drive-cli [全局参数] shares list <workspace> [--path <relative_path>]
+drive-cli [全局参数] shares ls <workspace> [path]
+drive-cli [全局参数] shares list <workspace> [path]
 ```
 
 用途：
@@ -870,11 +874,12 @@ drive-board [全局参数] shares list <workspace> [path]
 - 这个命令用于查看“我分享出去的记录”。
 - 如果只想查看某一路径是否已被分享，传 `--path` 能减少返回量。
 - 位置参数写法 `shares ls main-agent reports` 与 `shares ls main-agent --path reports` 等价。
+- 只有该 workspace 的 `owner` 或管理员能查看分享记录。
 
 示例：
 
 ```bash
-drive-board --token main-agent-token --format json shares ls main-agent --path reports
+drive-cli --token main-agent-token --format json shares ls main-agent --path reports
 ```
 
 ### `shares rm`
@@ -882,7 +887,7 @@ drive-board --token main-agent-token --format json shares ls main-agent --path r
 语法：
 
 ```bash
-drive-board [全局参数] shares rm <share_id>
+drive-cli [全局参数] shares rm <share_id>
 ```
 
 用途：
@@ -899,11 +904,12 @@ drive-board [全局参数] shares rm <share_id>
 
 - 该命令删除的是一条具体分享记录，不会删除源文件。
 - 如果 `share_id` 不存在，服务端返回 404。
+- 只有该 workspace 的 `owner` 或管理员能删除分享记录。
 
 示例：
 
 ```bash
-drive-board --token main-agent-token shares rm 12
+drive-cli --token main-agent-token shares rm 12
 ```
 
 ### `shares shared`
@@ -911,7 +917,7 @@ drive-board --token main-agent-token shares rm 12
 语法：
 
 ```bash
-drive-board [全局参数] shares shared
+drive-cli [全局参数] shares shared
 ```
 
 用途：
@@ -931,7 +937,7 @@ drive-board [全局参数] shares shared
 示例：
 
 ```bash
-drive-board --token cli-agent-token --format json shares shared
+drive-cli --token cli-agent-token --format json shares shared
 ```
 
 ### `public-links create`
@@ -939,7 +945,7 @@ drive-board --token cli-agent-token --format json shares shared
 语法：
 
 ```bash
-drive-board [全局参数] public-links create <workspace> <path>
+drive-cli [全局参数] public-links create <workspace> <path>
 ```
 
 用途：
@@ -957,6 +963,7 @@ drive-board [全局参数] public-links create <workspace> <path>
 
 - 公开链接仅支持文件，不支持文件夹。
 - 同一个文件最多只会保留一个公开链接；如果再次执行 `public-links create`，CLI 会返回已有链接，而不会生成第二条。
+- 只有该 workspace 的 `owner` 或管理员能创建公开链接；路径级 `write` 分享不能为文件创建公开链接。
 - 如果目标文件是 `.html` 或 `.htm`，公开链接会直接按网页渲染，而不是强制下载 HTML 文件。
 - HTML 公开链接只适合单文件页面；公开访问时不会额外暴露相对路径依赖的 CSS、JS、图片等资源，所以样式和脚本必须内联在同一个 HTML 文件里。
 - CLI 会把服务端的 `public_link` 包装层自动拆掉，所以 `--format json` 下返回的顶层对象本身就包含 `id`、`path`、`token`、`created_at`、`download_url` 等字段。
@@ -965,7 +972,7 @@ drive-board [全局参数] public-links create <workspace> <path>
 示例：
 
 ```bash
-drive-board --token main-agent-token --format json public-links create main-agent reports/a.pdf
+drive-cli --token main-agent-token --format json public-links create main-agent reports/a.pdf
 ```
 
 ### `public-links ls` / `public-links list`
@@ -973,10 +980,10 @@ drive-board --token main-agent-token --format json public-links create main-agen
 语法：
 
 ```bash
-drive-board [全局参数] public-links ls <workspace> [--path <relative_path>]
-drive-board [全局参数] public-links list <workspace> [--path <relative_path>]
-drive-board [全局参数] public-links ls <workspace> [path]
-drive-board [全局参数] public-links list <workspace> [path]
+drive-cli [全局参数] public-links ls <workspace> [--path <relative_path>]
+drive-cli [全局参数] public-links list <workspace> [--path <relative_path>]
+drive-cli [全局参数] public-links ls <workspace> [path]
+drive-cli [全局参数] public-links list <workspace> [path]
 ```
 
 用途：
@@ -996,12 +1003,13 @@ drive-board [全局参数] public-links list <workspace> [path]
 - 不传 `--path` 时，返回 `target_kind=workspace` 和整个 workspace 范围内的 `public_links` 数组。
 - CLI 会根据当前 `--server` 把 `public_links[*].download_url` 补成最终可访问的完整绝对链接。
 - 位置参数写法 `public-links ls main-agent reports/a.pdf` 与 `public-links ls main-agent --path reports/a.pdf` 等价。
+- 只有该 workspace 的 `owner` 或管理员能查看公开链接记录。
 
 示例：
 
 ```bash
-drive-board --token main-agent-token --format json public-links ls main-agent
-drive-board --token main-agent-token --format json public-links ls main-agent --path reports/a.pdf
+drive-cli --token main-agent-token --format json public-links ls main-agent
+drive-cli --token main-agent-token --format json public-links ls main-agent --path reports/a.pdf
 ```
 
 ### `public-links rm`
@@ -1009,7 +1017,7 @@ drive-board --token main-agent-token --format json public-links ls main-agent --
 语法：
 
 ```bash
-drive-board [全局参数] public-links rm <link_id>
+drive-cli [全局参数] public-links rm <link_id>
 ```
 
 用途：
@@ -1026,19 +1034,20 @@ drive-board [全局参数] public-links rm <link_id>
 
 - 该命令只撤销公开链接，不会删除原文件。
 - 如果 `link_id` 不存在，服务端返回 404。
+- 只有该 workspace 的 `owner` 或管理员能撤销公开链接。
 
 示例：
 
 ```bash
-drive-board --token main-agent-token public-links rm 3
+drive-cli --token main-agent-token public-links rm 3
 ```
 
 ## 当前 CLI 不支持的操作
 
-下面这些能力当前不要尝试用 `drive-board` CLI 直接做，因为命令面里没有实现对应子命令：
+下面这些能力当前不要尝试用 `drive-cli` CLI 直接做，因为命令面里没有实现对应子命令：
 
 - 创建、更新、删除 actor。
 - 删除 `private` workspace。
 - 通过 CLI 直接编辑二进制文件内容。
 
-如果未来 CLI 命令面扩展，应以 `drive-board --help` 和对应子命令 `--help` 为准，不要假设 API 已有的能力就一定已经暴露到 CLI。
+如果未来 CLI 命令面扩展，应以 `drive-cli --help` 和对应子命令 `--help` 为准，不要假设 API 已有的能力就一定已经暴露到 CLI。
