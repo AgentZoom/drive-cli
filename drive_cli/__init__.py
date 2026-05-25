@@ -1,4 +1,4 @@
-"""Drive Board package."""
+"""Drive CLI package."""
 
 __all__ = ["__version__"]
 

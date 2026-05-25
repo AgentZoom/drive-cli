@@ -11,6 +11,10 @@ from drive_cli import cli as cli_module
 runner = CliRunner()
 
 
+def test_default_server_uses_generic_local_endpoint():
+    assert cli_module.DEFAULT_SERVER == "http://drive.mm-lab.cn"
+
+
 def test_workspaces_add_member_requires_prefixed_actor_id(monkeypatch):
     def fail_request(method: str, url: str, **kwargs):
         raise AssertionError("request should not be called")
@@ -19,7 +23,7 @@ def test_workspaces_add_member_requires_prefixed_actor_id(monkeypatch):
 
     result = runner.invoke(
         cli_module.app,
-        ["workspaces", "add-member", "research-team", "--actor", "test_agent_2", "--permission", "read"],
+        ["workspaces", "add-member", "team-space", "--actor", "sample_agent_2", "--permission", "read"],
     )
 
     assert result.exit_code == 1
@@ -34,7 +38,7 @@ def test_workspaces_add_member_rejects_invalid_permission_locally(monkeypatch):
 
     result = runner.invoke(
         cli_module.app,
-        ["workspaces", "add-member", "research-team", "--actor", "agent:cli-agent", "--permission", "admin"],
+        ["workspaces", "add-member", "team-space", "--actor", "agent:sample-agent", "--permission", "admin"],
     )
 
     assert result.exit_code == 1
@@ -49,7 +53,7 @@ def test_shares_add_rejects_invalid_permission_locally(monkeypatch):
 
     result = runner.invoke(
         cli_module.app,
-        ["shares", "add", "main-agent", "reports", "--actor", "agent:cli-agent", "--permission", "owner"],
+        ["shares", "add", "sample-space", "reports", "--actor", "agent:sample-agent", "--permission", "owner"],
     )
 
     assert result.exit_code == 1

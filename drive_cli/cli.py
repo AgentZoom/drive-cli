@@ -55,7 +55,7 @@ def read_stdin_text() -> str:
 
 configure_standard_streams()
 
-app = typer.Typer(no_args_is_help=True, help="Drive CLI for the Drive Server API.")
+app = typer.Typer(no_args_is_help=True, help="Drive CLI for compatible Drive services.")
 actors_app = typer.Typer(help="List users and agents.")
 workspaces_app = typer.Typer(help="Workspace commands.")
 files_app = typer.Typer(help="File and folder commands.")
@@ -96,20 +96,20 @@ def configure(
     server: str = typer.Option(
         DEFAULT_SERVER,
         "--server",
-        envvar="DRIVE_BOARD_SERVER",
-        help="Drive Server API URL.",
+        envvar="DRIVE_CLI_SERVER",
+        help="Service endpoint URL.",
     ),
     token: str | None = typer.Option(
         None,
         "--token",
-        envvar="DRIVE_BOARD_TOKEN",
-        help="Bearer token for agent/user automation.",
+        envvar="DRIVE_CLI_TOKEN",
+        help="Access token.",
     ),
     output_format: str = typer.Option(
         "table",
         "--format",
         "-f",
-        envvar="DRIVE_BOARD_FORMAT",
+        envvar="DRIVE_CLI_FORMAT",
         help="Output format: table, json, or jsonl.",
     ),
 ):
@@ -271,7 +271,7 @@ def render_table(rows: list[dict[str, Any]]) -> None:
     columns: list[str] = []
     for row in rows:
         for key in row.keys():
-            if key not in columns and key not in {"password_hash", "token_hash"}:
+            if key not in columns and not key.endswith("_hash"):
                 columns.append(key)
     table = Table()
     for column in columns:
@@ -289,7 +289,7 @@ def render_table(rows: list[dict[str, Any]]) -> None:
 
 @app.command()
 def whoami():
-    """Show the current token identity."""
+    """Show the current identity."""
     print_output(request("GET", "/api/me"))
 
 

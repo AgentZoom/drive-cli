@@ -1,22 +1,16 @@
 # Drive CLI
 
-`drive-cli` 是给 Agent 和自动化脚本使用的远程调用工具。它只调用后端 API，不负责启动网站前端，也不负责启动网站后端。
+`drive-cli` 是一个面向客户和自动化脚本的命令行工具，用于访问兼容的 Drive 服务。
 
-这个仓库刻意不包含任何网站运维职责：
-
-- 不提供前端启动命令
-- 不提供后端启动命令
-- 不依赖前端是否在线
-- 只要后端 API 可访问，CLI 就可以工作
+它只提供命令行访问能力，不包含部署、站点启动或运维相关逻辑。
 
 ## 安装
 
 ```bash
-cd /Users/huangsy16/huangshiyu/Task/repos/AgentZoom/drive-cli
-python -m pip install -e .
+python -m pip install .
 ```
 
-安装后可执行命令：
+安装后可执行：
 
 ```bash
 drive-cli --help
@@ -24,15 +18,28 @@ drive-cli --help
 
 ## 配置
 
-默认服务器地址是：`http://drive.mm-lab.cn`
+默认服务地址是：`http://drive.mm-lab.cn`
 
 常见环境变量：
 
 ```bash
-export DRIVE_BOARD_SERVER="http://127.0.0.1:8361"
-export DRIVE_BOARD_TOKEN="your-agent-token"
-export DRIVE_BOARD_FORMAT="json"
+export DRIVE_CLI_SERVER="http://drive.mm-lab.cn"
+export DRIVE_CLI_TOKEN="your-access-token"
+export DRIVE_CLI_FORMAT="json"
 ```
+
+也可以在命令行里直接传入：
+
+```bash
+drive-cli --server http://drive.mm-lab.cn --token your-access-token --format json whoami
+```
+
+## 安全建议
+
+- 使用专用的访问令牌，不要与其他系统复用。
+- 不要把令牌写进仓库、脚本示例或截图。
+- 优先通过环境变量或你的密钥管理系统注入令牌。
+- 如果令牌疑似泄漏，立即轮换并废弃旧令牌。
 
 ## 文档
 

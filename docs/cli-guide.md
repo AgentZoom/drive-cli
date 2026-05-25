@@ -1,10 +1,10 @@
 # Drive CLI 使用指南
 
-`drive-cli` 给 Agent 和自动化脚本调用已存在的 Drive Server 服务使用。本指南只覆盖远程调用型 CLI 命令，不覆盖网站或服务启动方式。
+`drive-cli` 给客户、Agent 和自动化脚本访问已部署服务使用。本指南只覆盖公开 CLI 命令与使用方式。
 
 CLI 统一通过 Bearer Token 鉴权，不使用网页端账号密码登录流程。
 
-如无特殊说明，本仓库里的 Agent 和自动化脚本默认都连接生产环境 `http://drive.mm-lab.cn`；只有本地开发、联调或临时验证时才改到其他地址。这个生产入口必须把 `/api`、`/preview`、`/public`、`/healthz` 直接转发到后端 `drive_server`，这样 CLI 才不会依赖前端进程是否存活。
+如无特殊说明，CLI 默认连接生产地址 `http://drive.mm-lab.cn`；只有在你明确接入其他环境时才需要改 `--server` 或环境变量。
 
 ## Agent 快速规则
 
@@ -29,27 +29,27 @@ drive-cli [全局参数] <命令组或命令> [子命令] [位置参数] [命令
 正确示例：
 
 ```bash
-drive-cli --server http://drive.mm-lab.cn --token main-agent-token --format json whoami
-drive-cli --token main-agent-token --format json files ls main-agent
-drive-cli --token main-agent-token workspaces add-member research-team --actor agent:cli-agent --permission write
+drive-cli --server http://drive.mm-lab.cn --token your-access-token --format json whoami
+drive-cli --token your-access-token --format json files ls sample-space
+drive-cli --token your-access-token workspaces add-member team-space --actor agent:sample-agent --permission write
 ```
 
 环境变量也可以提供全局配置：
 
 ```bash
-export DRIVE_BOARD_SERVER="http://drive.mm-lab.cn"
-export DRIVE_BOARD_TOKEN="main-agent-token"
-export DRIVE_BOARD_FORMAT="json"
+export DRIVE_CLI_SERVER="http://drive.mm-lab.cn"
+export DRIVE_CLI_TOKEN="your-access-token"
+export DRIVE_CLI_FORMAT="json"
 ```
 
 ## 全局参数
 
-| 参数             | 环境变量             | 默认值                   | 是否必需     | 说明                                                                                                                                                                  |
-| ---------------- | -------------------- | ------------------------ | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--version`      | 无                   | `false`                  | 否           | 打印 CLI 版本号并立即退出，不会发任何请求。                                                                                                                           |
-| `--server`       | `DRIVE_BOARD_SERVER` | `http://drive.mm-lab.cn` | 否           | Drive Board 服务根地址。不显式传入时，默认就是生产环境 `http://drive.mm-lab.cn`。CLI 会自动去掉末尾 `/`，并用于把 `public-links` 返回的相对下载路径补成最终绝对链接。 |
-| `--token`        | `DRIVE_BOARD_TOKEN`  | 无                       | 大多数命令是 | Bearer Token。未提供时，请求不会带 `Authorization` 头，通常会触发 401/403。                                                                                           |
-| `--format`, `-f` | `DRIVE_BOARD_FORMAT` | `table`                  | 否           | 输出格式。允许值：`table`、`json`、`jsonl`。                                                                                                                          |
+| 参数             | 环境变量           | 默认值                   | 是否必需     | 说明                                                                                                                                              |
+| ---------------- | ------------------ | ------------------------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--version`      | 无                 | `false`                  | 否           | 打印 CLI 版本号并立即退出，不会发任何请求。                                                                                                       |
+| `--server`       | `DRIVE_CLI_SERVER` | `http://drive.mm-lab.cn` | 否           | 服务根地址。不显式传入时，默认使用生产地址 `http://drive.mm-lab.cn`。CLI 会自动去掉末尾 `/`，并用于把公开链接返回的相对下载路径补成最终绝对链接。 |
+| `--token`        | `DRIVE_CLI_TOKEN`  | 无                       | 大多数命令是 | Bearer Token。未提供时，请求不会带 `Authorization` 头，通常会触发 401/403。                                                                       |
+| `--format`, `-f` | `DRIVE_CLI_FORMAT` | `table`                  | 否           | 输出格式。允许值：`table`、`json`、`jsonl`。                                                                                                      |
 
 ## 输出格式与错误行为
 
@@ -59,7 +59,7 @@ export DRIVE_BOARD_FORMAT="json"
 - 如果输出是数组，会渲染成表格。
 - 如果输出是对象，会渲染成两列 `Field / Value`。
 - 嵌套对象或数组会被转成 JSON 字符串后显示。
-- 表格渲染时会隐藏 `password_hash` 和 `token_hash` 这类内部字段。
+- 表格渲染时会自动跳过明显不适合终端展示的内部字段。
 
 ### `json`
 
@@ -91,13 +91,13 @@ export DRIVE_BOARD_FORMAT="json"
 
 | 术语           | 含义                                                                                  |
 | -------------- | ------------------------------------------------------------------------------------- |
-| `actor_id`     | 身份唯一标识。用户形如 `user:huangshiyu`，Agent 形如 `agent:main-agent`。             |
+| `actor_id`     | 身份唯一标识。用户形如 `user:alice`，Agent 形如 `agent:build-bot`。                   |
 | `username`     | 仅人类用户有值；Agent 通常是 `null`。                                                 |
 | `workspace`    | 工作区名称。每个用户和 Agent 都有自己的 private workspace；共享空间是 `share_group`。 |
 | `path`         | 工作区内部相对路径，例如 `reports/a.pdf`。空路径表示工作区根目录。                    |
 | `permission`   | 权限字符串。成员权限用 `read`、`write`、`owner`；文件分享权限用 `read`、`write`。     |
 | `kind`         | 对象类型。常见值有 `user`、`agent`、`private`、`share_group`、`file`、`folder`。      |
-| `preview_type` | 前端预览类型。常见值有 `folder`、`audio`、`html`、`pdf`、`image`、`text`。            |
+| `preview_type` | 内容展示提示类型。常见值有 `folder`、`audio`、`html`、`pdf`、`image`、`text`。        |
 
 ## 常见返回字段
 
@@ -150,14 +150,14 @@ CLI 基本不重命名服务端返回字段。下面是最常见对象形状。
 
 `files list.items[]` 常见返回字段：
 
-| 字段           | 含义                                  |
-| -------------- | ------------------------------------- |
-| `name`         | 文件或文件夹名，不含上级路径。        |
-| `path`         | 相对 workspace 根目录的完整路径。     |
-| `kind`         | `file` 或 `folder`。                  |
-| `size`         | 文件字节数；文件夹通常为 `null`。     |
-| `modified_at`  | 最近修改时间。                        |
-| `preview_type` | 前端预览类型。文件夹通常为 `folder`。 |
+| 字段           | 含义                                      |
+| -------------- | ----------------------------------------- |
+| `name`         | 文件或文件夹名，不含上级路径。            |
+| `path`         | 相对 workspace 根目录的完整路径。         |
+| `kind`         | `file` 或 `folder`。                      |
+| `size`         | 文件字节数；文件夹通常为 `null`。         |
+| `modified_at`  | 最近修改时间。                            |
+| `preview_type` | 内容展示提示类型。文件夹通常为 `folder`。 |
 
 ### 分享条目对象
 
@@ -202,7 +202,7 @@ drive-cli [全局参数] whoami
 示例：
 
 ```bash
-drive-cli --token main-agent-token --format json whoami
+drive-cli --token your-access-token --format json whoami
 ```
 
 ### `actors list`
@@ -232,7 +232,7 @@ drive-cli [全局参数] actors list [--type <all|user|agent>] [--include-inacti
 示例：
 
 ```bash
-drive-cli --token main-agent-token --format json actors list
+drive-cli --token your-access-token --format json actors list
 ```
 
 ### `workspaces list`
@@ -260,7 +260,7 @@ drive-cli [全局参数] workspaces list
 示例：
 
 ```bash
-drive-cli --token main-agent-token --format json workspaces list
+drive-cli --token your-access-token --format json workspaces list
 ```
 
 ### `workspaces create-group`
@@ -289,7 +289,7 @@ drive-cli [全局参数] workspaces create-group --name <workspace_name>
 示例：
 
 ```bash
-drive-cli --token main-agent-token --format json workspaces create-group --name research-team
+drive-cli --token your-access-token --format json workspaces create-group --name team-space
 ```
 
 ### `workspaces members`
@@ -317,7 +317,7 @@ drive-cli [全局参数] workspaces members <workspace>
 示例：
 
 ```bash
-drive-cli --token main-agent-token --format json workspaces members research-team
+drive-cli --token your-access-token --format json workspaces members team-space
 ```
 
 ### `workspaces add-member`
@@ -349,7 +349,7 @@ drive-cli [全局参数] workspaces add-member <workspace> --actor <actor_id> [-
 示例：
 
 ```bash
-drive-cli --token main-agent-token workspaces add-member research-team --actor agent:cli-agent --permission write
+drive-cli --token your-access-token workspaces add-member team-space --actor agent:sample-agent --permission write
 ```
 
 ### `workspaces remove-member`
@@ -366,10 +366,10 @@ drive-cli [全局参数] workspaces remove-member <workspace> <actor_id>
 
 参数：
 
-| 参数        | 是否必需 | 含义                                      |
-| ----------- | -------- | ----------------------------------------- |
-| `workspace` | 是       | 目标工作区名。                            |
-| `actor_id`  | 是       | 要移除的成员 ID，例如 `agent:cli-agent`。 |
+| 参数        | 是否必需 | 含义                                         |
+| ----------- | -------- | -------------------------------------------- |
+| `workspace` | 是       | 目标工作区名。                               |
+| `actor_id`  | 是       | 要移除的成员 ID，例如 `agent:sample-agent`。 |
 
 说明：
 
@@ -380,7 +380,7 @@ drive-cli [全局参数] workspaces remove-member <workspace> <actor_id>
 示例：
 
 ```bash
-drive-cli --token main-agent-token workspaces remove-member research-team agent:cli-agent
+drive-cli --token your-access-token workspaces remove-member team-space agent:sample-agent
 ```
 
 ### `workspaces delete`
@@ -410,7 +410,7 @@ drive-cli [全局参数] workspaces delete <workspace>
 示例：
 
 ```bash
-drive-cli --token main-agent-token workspaces delete research-team
+drive-cli --token your-access-token workspaces delete team-space
 ```
 
 ### `files ls` / `files list`
@@ -449,8 +449,8 @@ drive-cli [全局参数] files list <workspace> --path <relative_path>
 示例：
 
 ```bash
-drive-cli --token main-agent-token --format json files ls main-agent
-drive-cli --token main-agent-token --format json files ls main-agent reports
+drive-cli --token your-access-token --format json files ls sample-space
+drive-cli --token your-access-token --format json files ls sample-space reports
 ```
 
 ### `files mkdir`
@@ -475,7 +475,7 @@ drive-cli [全局参数] files mkdir <workspace> <path>
 示例：
 
 ```bash
-drive-cli --token main-agent-token files mkdir main-agent reports
+drive-cli --token your-access-token files mkdir sample-space reports
 ```
 
 ### `files upload`
@@ -509,10 +509,10 @@ drive-cli [全局参数] files upload <workspace> <local_path> [--path <remote_p
 示例：
 
 ```bash
-drive-cli --token main-agent-token files upload main-agent ./a.pdf
-drive-cli --token main-agent-token files upload main-agent ./a.pdf --path reports/
-drive-cli --token main-agent-token files upload main-agent ./a.pdf --path reports/final.pdf
-drive-cli --token main-agent-token files upload main-agent ./a.pdf --path reports/final.pdf --force
+drive-cli --token your-access-token files upload sample-space ./a.pdf
+drive-cli --token your-access-token files upload sample-space ./a.pdf --path reports/
+drive-cli --token your-access-token files upload sample-space ./a.pdf --path reports/final.pdf
+drive-cli --token your-access-token files upload sample-space ./a.pdf --path reports/final.pdf --force
 ```
 
 ### `files download`
@@ -545,7 +545,7 @@ drive-cli [全局参数] files download <workspace> <remote_path> [--output <loc
 示例：
 
 ```bash
-drive-cli --token main-agent-token files download main-agent reports/a.pdf --output ./a.pdf
+drive-cli --token your-access-token files download sample-space reports/a.pdf --output ./a.pdf
 ```
 
 ### `files cat`
@@ -576,7 +576,7 @@ drive-cli [全局参数] files cat <workspace> <path>
 示例：
 
 ```bash
-drive-cli --token main-agent-token files cat main-agent notes/readme.md
+drive-cli --token your-access-token files cat sample-space notes/readme.md
 ```
 
 ### `files write`
@@ -610,8 +610,8 @@ drive-cli [全局参数] files write <workspace> <path> (--file <local_file> | -
 示例：
 
 ```bash
-drive-cli --token main-agent-token files write main-agent notes/readme.md --file ./readme.md
-cat ./readme.md | drive-cli --token main-agent-token files write main-agent notes/readme.md --stdin
+drive-cli --token your-access-token files write sample-space notes/readme.md --file ./readme.md
+cat ./readme.md | drive-cli --token your-access-token files write sample-space notes/readme.md --stdin
 ```
 
 ### `files append`
@@ -647,8 +647,8 @@ drive-cli [全局参数] files append <workspace> <path> (--file <local_file> | 
 示例：
 
 ```bash
-echo "\n## 新增结论" | drive-cli --token main-agent-token files append main-agent notes/readme.md --stdin
-drive-cli --token main-agent-token files append main-agent notes/readme.md --file ./appendix.md
+echo "\n## 新增结论" | drive-cli --token your-access-token files append sample-space notes/readme.md --stdin
+drive-cli --token your-access-token files append sample-space notes/readme.md --file ./appendix.md
 ```
 
 ### `files cp`
@@ -679,7 +679,7 @@ drive-cli [全局参数] files cp <workspace> <source_path> <destination_path>
 示例：
 
 ```bash
-drive-cli --token main-agent-token files cp main-agent reports/daily.md archive/daily.md
+drive-cli --token your-access-token files cp sample-space reports/daily.md archive/daily.md
 ```
 
 ### `files mv`
@@ -711,7 +711,7 @@ drive-cli [全局参数] files mv <workspace> <source_path> <destination_path>
 示例：
 
 ```bash
-drive-cli --token main-agent-token files mv main-agent reports/daily.md archive/summary.md
+drive-cli --token your-access-token files mv sample-space reports/daily.md archive/summary.md
 ```
 
 ### `files rename`
@@ -742,7 +742,7 @@ drive-cli [全局参数] files rename <workspace> <path> <new_name>
 示例：
 
 ```bash
-drive-cli --token main-agent-token files rename main-agent archive/summary.md final.md
+drive-cli --token your-access-token files rename sample-space archive/summary.md final.md
 ```
 
 ### `files rm` / `files delete`
@@ -773,7 +773,7 @@ drive-cli [全局参数] files delete <workspace> <path>
 示例：
 
 ```bash
-drive-cli --token main-agent-token files rm main-agent reports/a.pdf
+drive-cli --token your-access-token files rm sample-space reports/a.pdf
 ```
 
 ### `files preview-url`
@@ -810,7 +810,7 @@ drive-cli [全局参数] files preview-url <workspace> <path>
 示例：
 
 ```bash
-drive-cli --token main-agent-token --format json files preview-url main-agent test_html/index.html
+drive-cli --token your-access-token --format json files preview-url sample-space test_html/index.html
 ```
 
 ### `shares add`
@@ -843,7 +843,7 @@ drive-cli [全局参数] shares add <workspace> <path> --actor <actor_id> [--per
 示例：
 
 ```bash
-drive-cli --token main-agent-token shares add main-agent reports --actor agent:cli-agent --permission read
+drive-cli --token your-access-token shares add sample-space reports --actor agent:sample-agent --permission read
 ```
 
 ### `shares ls` / `shares list`
@@ -873,13 +873,13 @@ drive-cli [全局参数] shares list <workspace> [path]
 - `shares ls` 是推荐写法；`shares list` 是兼容别名。
 - 这个命令用于查看“我分享出去的记录”。
 - 如果只想查看某一路径是否已被分享，传 `--path` 能减少返回量。
-- 位置参数写法 `shares ls main-agent reports` 与 `shares ls main-agent --path reports` 等价。
+- 位置参数写法 `shares ls sample-space reports` 与 `shares ls sample-space --path reports` 等价。
 - 只有该 workspace 的 `owner` 或管理员能查看分享记录。
 
 示例：
 
 ```bash
-drive-cli --token main-agent-token --format json shares ls main-agent --path reports
+drive-cli --token your-access-token --format json shares ls sample-space --path reports
 ```
 
 ### `shares rm`
@@ -909,7 +909,7 @@ drive-cli [全局参数] shares rm <share_id>
 示例：
 
 ```bash
-drive-cli --token main-agent-token shares rm 12
+drive-cli --token your-access-token shares rm 12
 ```
 
 ### `shares shared`
@@ -937,7 +937,7 @@ drive-cli [全局参数] shares shared
 示例：
 
 ```bash
-drive-cli --token cli-agent-token --format json shares shared
+drive-cli --token your-second-token --format json shares shared
 ```
 
 ### `public-links create`
@@ -972,7 +972,7 @@ drive-cli [全局参数] public-links create <workspace> <path>
 示例：
 
 ```bash
-drive-cli --token main-agent-token --format json public-links create main-agent reports/a.pdf
+drive-cli --token your-access-token --format json public-links create sample-space reports/a.pdf
 ```
 
 ### `public-links ls` / `public-links list`
@@ -1002,14 +1002,14 @@ drive-cli [全局参数] public-links list <workspace> [path]
 - `public-links ls` 是推荐写法；`public-links list` 是兼容别名。
 - 不传 `--path` 时，返回 `target_kind=workspace` 和整个 workspace 范围内的 `public_links` 数组。
 - CLI 会根据当前 `--server` 把 `public_links[*].download_url` 补成最终可访问的完整绝对链接。
-- 位置参数写法 `public-links ls main-agent reports/a.pdf` 与 `public-links ls main-agent --path reports/a.pdf` 等价。
+- 位置参数写法 `public-links ls sample-space reports/a.pdf` 与 `public-links ls sample-space --path reports/a.pdf` 等价。
 - 只有该 workspace 的 `owner` 或管理员能查看公开链接记录。
 
 示例：
 
 ```bash
-drive-cli --token main-agent-token --format json public-links ls main-agent
-drive-cli --token main-agent-token --format json public-links ls main-agent --path reports/a.pdf
+drive-cli --token your-access-token --format json public-links ls sample-space
+drive-cli --token your-access-token --format json public-links ls sample-space --path reports/a.pdf
 ```
 
 ### `public-links rm`
@@ -1039,7 +1039,7 @@ drive-cli [全局参数] public-links rm <link_id>
 示例：
 
 ```bash
-drive-cli --token main-agent-token public-links rm 3
+drive-cli --token your-access-token public-links rm 3
 ```
 
 ## 当前 CLI 不支持的操作
