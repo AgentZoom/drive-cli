@@ -4,7 +4,7 @@
 
 CLI 统一通过 Bearer Token 鉴权，不使用网页端账号密码登录流程。
 
-如无特殊说明，本仓库里的 Agent 和自动化脚本默认都连接生产环境 `http://drive.mm-lab.cn`；只有本地开发、联调或临时验证时才改到其他地址。
+如无特殊说明，本仓库里的 Agent 和自动化脚本默认都连接生产环境 `http://drive.mm-lab.cn`；只有本地开发、联调或临时验证时才改到其他地址。这个生产入口必须把 `/api`、`/preview`、`/public`、`/healthz` 直接转发到后端 `drive_server`，这样 CLI 才不会依赖前端进程是否存活。
 
 ## Agent 快速规则
 
