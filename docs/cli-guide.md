@@ -525,15 +525,23 @@ drive-cli [全局参数] files download <workspace> <remote_path> [--output <loc
 
 用途：
 
-- 下载 workspace 内的单个文件到本地。
+- 下载 workspace 内的单个文件，或把整个文件夹打包成 zip 后下载到本地。
 
 参数：
 
-| 参数             | 是否必需 | 含义                                                      |
-| ---------------- | -------- | --------------------------------------------------------- |
-| `workspace`      | 是       | 目标工作区名。                                            |
-| `remote_path`    | 是       | 远端文件相对路径。                                        |
-| `--output`, `-o` | 否       | 本地输出文件路径。省略时使用 `remote_path` 的文件名部分。 |
+| 参数             | 是否必需 | 含义                                                     |
+| ---------------- | -------- | -------------------------------------------------------- |
+| `workspace`      | 是       | 目标工作区名。                                           |
+| `remote_path`    | 是       | 远端文件或文件夹的相对路径。                             |
+| `--output`, `-o` | 否       | 本地输出文件路径。省略时优先使用服务端返回的下载文件名。 |
+
+说明：
+
+- 当 `remote_path` 指向普通文件时，CLI 会直接把文件内容写到本地。
+- 当 `remote_path` 指向文件夹时，服务端会先把目录打包成 zip，再由 CLI 下载。
+- 文件夹下载时，省略 `--output` 通常会得到 `<文件夹名>.zip`；这是根据服务端 `Content-Disposition` 返回值决定的。
+- zip 包内部会保留文件夹本身作为根目录，以及该目录下的相对层级。
+- 需要当前 token 对该路径具备读取权限；如果只有其他 workspace 的存在信息，但没有对应路径读权限，请求仍会返回 `403`。
 
 返回结构：
 
@@ -546,6 +554,8 @@ drive-cli [全局参数] files download <workspace> <remote_path> [--output <loc
 
 ```bash
 drive-cli --token your-access-token files download sample-space reports/a.pdf --output ./a.pdf
+drive-cli --token your-access-token files download sample-space reports
+drive-cli --token your-access-token files download sample-space reports --output ./reports-backup.zip
 ```
 
 ### `files cat`

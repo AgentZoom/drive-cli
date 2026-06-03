@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import httpx
 from typer.testing import CliRunner
@@ -89,3 +90,43 @@ def test_response_error_detail_formats_object_payloads():
     detail = cli_module.response_error_detail(response)
 
     assert detail == json.dumps({"error": "bad request", "field": "path"}, ensure_ascii=False)
+
+
+def test_response_download_filename_prefers_rfc5987_header():
+    response = httpx.Response(
+        200,
+        headers={"content-disposition": "attachment; filename*=utf-8''reports%20archive.zip"},
+        request=httpx.Request("GET", "http://drive.example.com/api/files/download"),
+    )
+
+    assert cli_module.response_download_filename(response) == "reports archive.zip"
+
+
+def test_files_download_uses_server_filename_for_folder_archives(monkeypatch, tmp_path):
+    response = httpx.Response(
+        200,
+        headers={"content-disposition": 'attachment; filename="reports.zip"'},
+        content=b"zip-bytes",
+        request=httpx.Request("GET", "http://drive.example.com/api/files/download"),
+    )
+
+    class StubClient:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def get(self, url: str, params: dict[str, str]):
+            assert url == "/api/files/download"
+            assert params == {"workspace": "sample-space", "path": "reports"}
+            return response
+
+    monkeypatch.setattr(cli_module, "client", lambda: StubClient())
+    monkeypatch.chdir(tmp_path)
+
+    result = runner.invoke(cli_module.app, ["--format", "json", "files", "download", "sample-space", "reports"])
+
+    assert result.exit_code == 0, result.output
+    assert json.loads(result.output) == {"output": "reports.zip", "bytes": 9}
+    assert (tmp_path / "reports.zip").read_bytes() == b"zip-bytes"

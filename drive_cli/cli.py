@@ -4,7 +4,7 @@ import json
 import sys
 from pathlib import Path
 from typing import Annotated, Any
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 import httpx
 import typer
@@ -151,6 +151,23 @@ def response_error_detail(response: httpx.Response) -> str:
     if isinstance(detail, dict):
         return json.dumps(detail, ensure_ascii=False)
     return str(detail)
+
+
+def response_download_filename(response: httpx.Response) -> str | None:
+    disposition = response.headers.get("content-disposition", "")
+    if not disposition:
+        return None
+    parts = [part.strip() for part in disposition.split(";")]
+    for part in parts[1:]:
+        if part.lower().startswith("filename*="):
+            value = part.split("=", 1)[1].strip().strip('"')
+            encoding, separator, encoded_name = value.partition("''")
+            target = encoded_name if separator else value
+            return unquote(target, encoding=encoding or "utf-8")
+    for part in parts[1:]:
+        if part.lower().startswith("filename="):
+            return part.split("=", 1)[1].strip().strip('"')
+    return None
 
 
 def validate_actor_id(actor_id: str) -> str:
@@ -429,14 +446,14 @@ def files_download(
     remote_path: str,
     output: Path | None = typer.Option(None, "--output", "-o"),
 ):
-    """Download a file."""
+    """Download a file or folder."""
     with client() as http:
         response = http.get(
             "/api/files/download", params={"workspace": workspace, "path": remote_path}
         )
     if response.status_code >= 400:
         fail(f"{response.status_code}: {response_error_detail(response)}")
-    destination = output or Path(remote_path).name
+    destination = output or Path(response_download_filename(response) or Path(remote_path).name or workspace)
     Path(destination).write_bytes(response.content)
     print_output({"output": str(destination), "bytes": len(response.content)})
 
