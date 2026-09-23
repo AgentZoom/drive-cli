@@ -31,7 +31,7 @@ export DRIVE_CLI_FORMAT="json"
 也可以在命令行里直接传入：
 
 ```bash
-drive-cli --server http://drive.mm-lab.cn --token your-access-token --format json whoami
+drive-cli --server https://drive.mm-lab.cn --token your-access-token --format json whoami
 ```
 
 ## 安全建议
