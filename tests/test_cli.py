@@ -12,8 +12,8 @@ from drive_cli import cli as cli_module
 runner = CliRunner()
 
 
-def test_default_server_uses_generic_local_endpoint():
-    assert cli_module.DEFAULT_SERVER == "http://drive.mm-lab.cn"
+def test_default_server_uses_secure_production_endpoint():
+    assert cli_module.DEFAULT_SERVER == "https://drive.mm-lab.cn"
 
 
 def test_workspaces_add_member_requires_prefixed_actor_id(monkeypatch):

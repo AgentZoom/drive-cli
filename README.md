@@ -18,12 +18,12 @@ drive-cli --help
 
 ## 配置
 
-默认服务地址是：`http://drive.mm-lab.cn`
+默认服务地址是：`https://drive.mm-lab.cn`
 
 常见环境变量：
 
 ```bash
-export DRIVE_CLI_SERVER="http://drive.mm-lab.cn"
+export DRIVE_CLI_SERVER="https://drive.mm-lab.cn"
 export DRIVE_CLI_TOKEN="your-access-token"
 export DRIVE_CLI_FORMAT="json"
 ```

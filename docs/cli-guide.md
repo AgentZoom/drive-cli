@@ -4,7 +4,7 @@
 
 CLI 统一通过 Bearer Token 鉴权，不使用网页端账号密码登录流程。
 
-如无特殊说明，CLI 默认连接生产地址 `http://drive.mm-lab.cn`；只有在你明确接入其他环境时才需要改 `--server` 或环境变量。
+如无特殊说明，CLI 默认连接生产地址 `https://drive.mm-lab.cn`；只有在你明确接入其他环境时才需要改 `--server` 或环境变量。
 
 ## Agent 快速规则
 
@@ -29,7 +29,7 @@ drive-cli [全局参数] <命令组或命令> [子命令] [位置参数] [命令
 正确示例：
 
 ```bash
-drive-cli --server http://drive.mm-lab.cn --token your-access-token --format json whoami
+drive-cli --server https://drive.mm-lab.cn --token your-access-token --format json whoami
 drive-cli --token your-access-token --format json files ls sample-space
 drive-cli --token your-access-token workspaces add-member team-space --actor agent:sample-agent --permission write
 ```
@@ -37,7 +37,7 @@ drive-cli --token your-access-token workspaces add-member team-space --actor age
 环境变量也可以提供全局配置：
 
 ```bash
-export DRIVE_CLI_SERVER="http://drive.mm-lab.cn"
+export DRIVE_CLI_SERVER="https://drive.mm-lab.cn"
 export DRIVE_CLI_TOKEN="your-access-token"
 export DRIVE_CLI_FORMAT="json"
 ```
@@ -47,7 +47,7 @@ export DRIVE_CLI_FORMAT="json"
 | 参数             | 环境变量           | 默认值                   | 是否必需     | 说明                                                                                                                                              |
 | ---------------- | ------------------ | ------------------------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--version`      | 无                 | `false`                  | 否           | 打印 CLI 版本号并立即退出，不会发任何请求。                                                                                                       |
-| `--server`       | `DRIVE_CLI_SERVER` | `http://drive.mm-lab.cn` | 否           | 服务根地址。不显式传入时，默认使用生产地址 `http://drive.mm-lab.cn`。CLI 会自动去掉末尾 `/`，并用于把公开链接返回的相对下载路径补成最终绝对链接。 |
+| `--server`       | `DRIVE_CLI_SERVER` | `https://drive.mm-lab.cn` | 否           | 服务根地址。不显式传入时，默认使用生产地址 `https://drive.mm-lab.cn`。CLI 会自动去掉末尾 `/`，并用于把公开链接返回的相对下载路径补成最终绝对链接。 |
 | `--token`        | `DRIVE_CLI_TOKEN`  | 无                       | 大多数命令是 | Bearer Token。未提供时，请求不会带 `Authorization` 头，通常会触发 401/403。                                                                       |
 | `--format`, `-f` | `DRIVE_CLI_FORMAT` | `table`                  | 否           | 输出格式。允许值：`table`、`json`、`jsonl`。                                                                                                      |
 

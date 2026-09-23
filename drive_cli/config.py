@@ -1,1 +1,1 @@
-DEFAULT_SERVER = "http://drive.mm-lab.cn"
+DEFAULT_SERVER = "https://drive.mm-lab.cn"
